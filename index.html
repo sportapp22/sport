@@ -196,8 +196,6 @@ nav button svg { width: 22px; height: 22px; }
 .set-input::-webkit-outer-spin-button, .set-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 .set-input:focus { outline: none; border-color: var(--accent); background: white; }
 
-.btn-timer { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--accent); font-weight: 600; background: var(--accent-light); border: none; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 6px; }
-
 .ex-note-area { padding: 0 16px 16px; }
 .ex-note { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text2); background: var(--bg); resize: none; }
 .ex-note:focus { outline: none; border-color: var(--accent); background: white; }
@@ -268,6 +266,10 @@ nav button svg { width: 22px; height: 22px; }
 .btn-settings.danger { color: #dc2626; border-color: #fecaca; }
 .btn-settings svg { width: 18px; height: 18px; flex-shrink: 0; }
 
+/* PROGRAM SELECTOR */
+.program-select { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--surface); margin-bottom: 8px; }
+.program-select:focus { outline: none; border-color: var(--accent); }
+
 /* TOAST */
 .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-120px); background: var(--text); color: white; padding: 11px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 500; transition: transform 0.3s; white-space: nowrap; box-shadow: var(--shadow-md); }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -311,7 +313,6 @@ nav button svg { width: 22px; height: 22px; }
 </div>
 
 <input type="file" id="fileInput" accept=".json">
-
 <!-- ====== DASHBOARD ====== -->
 <div class="page active" id="page-dash">
   <div class="page-header">
@@ -434,6 +435,13 @@ nav button svg { width: 22px; height: 22px; }
 <div class="page" id="page-settings">
   <div class="page-header"><h1>Réglages</h1></div>
   <div class="settings-section">
+    <h3>Programme</h3>
+    <select class="program-select" id="programSelect" onchange="setActiveProgram(this.value)">
+      <option value="ppl">Push / Pull / Legs</option>
+      <option value="fbx3">Full Body x3</option>
+    </select>
+  </div>
+  <div class="settings-section">
     <h3>Données</h3>
     <button class="btn-settings" onclick="exportData()">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -455,14 +463,13 @@ nav button svg { width: 22px; height: 22px; }
     <h3>À propos</h3>
     <div class="card" style="margin-bottom:0">
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        <strong style="color:var(--text)">Workout Tracker v1.1</strong><br>
+        <strong style="color:var(--text)">Workout Tracker v1.2</strong><br>
         Application locale · données dans Chrome<br>
         <span style="color:var(--warn)">⚠ Exporte régulièrement tes données !</span>
       </div>
     </div>
   </div>
 </div>
-
 <!-- NAV -->
 <nav>
   <button class="active" onclick="showPage('dash',this)">
@@ -486,12 +493,12 @@ nav button svg { width: 22px; height: 22px; }
     Réglages
   </button>
 </nav>
-
 <script>
 // ================================================================
-// PROGRAMME (fixe, non modifiable)
+// PROGRAMMES (structure multi-programmes, Phase 1)
 // ================================================================
-const P = {
+// PPL reste identique au programme existant.
+const PPL = {
   PUSH: {
     color:'#dc4f2a', firstExo:'bench_smith',
     exos:[
@@ -555,21 +562,114 @@ const P = {
   }
 };
 
+// Full Body x3 (squelette Phase 1 — à compléter avec le détail exact
+// de programme-entrainement-detail.md dans une prochaine itération).
+// Placeholder volontaire pour ne pas bloquer la Phase 0 (modèle de données).
+const FBX3 = {
+  A: { color:'#2563eb', firstExo:'a_squat', exos:[], warmup: PPL.LEGS.warmup },
+  B: { color:'#dc4f2a', firstExo:'b_bench', exos:[], warmup: PPL.PUSH.warmup },
+  C: { color:'#1a7f5e', firstExo:'c_row',   exos:[], warmup: PPL.PULL.warmup }
+};
+
+const PROGRAMS_CATALOG = { ppl: PPL, fbx3: FBX3 };
+
+// P pointe toujours vers le programme actif courant (rétro-compatibilité
+// avec tout le code existant qui référence P[tab]).
+let P = PPL;
 // ================================================================
-// STATE
+// STATE + MIGRATION (Phase 0)
 // ================================================================
-let db = (() => { try { return JSON.parse(localStorage.getItem('wdb'))||newDB(); } catch{return newDB();} })();
-function newDB(){ return {metriques:[], seances:[]}; }
+function newDB(){
+  return {
+    metriques: [],
+    seances: [],
+    programme_actif: 'ppl',
+    programmes: {},
+    planning: { type: {}, exceptions: {} },
+    repas: {}
+  };
+}
+
+function loadDB(){
+  let raw;
+  try { raw = JSON.parse(localStorage.getItem('wdb')); } catch(e) { raw = null; }
+  if(!raw) return newDB();
+  return migrateDB(raw);
+}
+
+// Étend une base existante (V0, sans les nouvelles clés) sans jamais
+// toucher aux séances / métriques déjà enregistrées.
+function migrateDB(raw){
+  let changed = false;
+
+  if(!raw.metriques) { raw.metriques = []; changed = true; }
+  if(!raw.seances)   { raw.seances = [];   changed = true; }
+
+  if(!raw.programmes){
+    // Première migration : le programme PPL actuel devient "ppl".
+    raw.programmes = { ppl: true, fbx3: true };
+    changed = true;
+  }
+  if(!raw.programme_actif){
+    raw.programme_actif = 'ppl';
+    changed = true;
+  }
+  if(!raw.planning){
+    raw.planning = { type: {}, exceptions: {} };
+    changed = true;
+  }
+  if(!raw.repas){
+    raw.repas = {};
+    changed = true;
+  }
+
+  // Taguer toutes les séances existantes avec programme_id + seance_id,
+  // en gardant `type` en doublon pour l'affichage rétro-compatible.
+  raw.seances.forEach(s=>{
+    if(!s.programme_id){
+      s.programme_id = 'ppl';
+      changed = true;
+    }
+    if(!s.seance_id && s.type){
+      s.seance_id = s.type; // ex: "PUSH" -> seance_id "PUSH" dans le programme ppl
+      changed = true;
+    }
+  });
+
+  if(changed){
+    // Sauvegarde de sécurité de l'état pré-migration avant d'écraser wdb,
+    // pour pouvoir vérifier via export qu'aucune séance n'a été perdue.
+    try{
+      localStorage.setItem('wdb_backup_pre_migration', JSON.stringify(raw));
+    }catch(e){ /* stockage plein: on continue quand même la migration */ }
+  }
+
+  return raw;
+}
+
 function saveDB(){ localStorage.setItem('wdb', JSON.stringify(db)); }
 
-let tab = 'PUSH';
+function setActiveProgram(id){
+  if(!PROGRAMS_CATALOG[id]) return;
+  db.programme_actif = id;
+  P = PROGRAMS_CATALOG[id];
+  saveDB();
+  tab = Object.keys(P)[0];
+  phase = 0; card = 0;
+  renderDash();
+  showToast('Programme changé ✓');
+}
+
+let db = loadDB();
+P = PROGRAMS_CATALOG[db.programme_actif] || PPL;
+
+let tab = Object.keys(P)[0];
 let phase = 0;
 let card = 0;
 let rating = 0;
 let timerIv = null;
 let timerSec = 0;
 let swipeX = 0, swipeY = 0, swiping = false;
-
 // ================================================================
 // NAV
 // ================================================================
@@ -582,12 +682,18 @@ function showPage(id, btn){
   if(id==='session')  renderSession();
   if(id==='history')  renderHistory();
   if(id==='progress') renderProgress();
+  if(id==='settings') renderSettings();
 }
 
 function goToSession(){
   tab = getNextTab();
   switchTab(tab);
   showPage('session', document.querySelectorAll('nav button')[1]);
+}
+
+function renderSettings(){
+  const sel = document.getElementById('programSelect');
+  if(sel) sel.value = db.programme_actif || 'ppl';
 }
 
 // ================================================================
@@ -619,7 +725,9 @@ function renderDash(){
   const ls=[...db.seances].sort((a,b)=>b.date.localeCompare(a.date))[0];
   if(ls){
     const el=document.getElementById('d-last-type');
-    el.textContent=ls.type; el.style.color=P[ls.type].color;
+    const lastP = PROGRAMS_CATALOG[ls.programme_id] || P;
+    el.textContent=ls.type;
+    el.style.color=(lastP[ls.type]||{}).color || 'var(--text)';
     document.getElementById('d-last-date').textContent=fmtDate(ls.date);
   }
 
@@ -631,20 +739,21 @@ function renderDash(){
 }
 
 function getNextTab(){
-  const o=['PUSH','PULL','LEGS'];
-  const ls=[...db.seances].sort((a,b)=>b.date.localeCompare(a.date))[0];
-  return ls?o[(o.indexOf(ls.type)+1)%3]:'PUSH';
+  const o=Object.keys(P);
+  const ls=[...db.seances].filter(s=>s.programme_id===db.programme_actif).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  return ls?o[(o.indexOf(ls.type)+1)%o.length]:o[0];
 }
 
 function getNextDay(t){
-  const map={PUSH:'Mardi',PULL:'Mercredi',LEGS:'Jeudi'};
+  const map={PUSH:'Mardi',PULL:'Mercredi',LEGS:'Jeudi',A:'Mardi',B:'Jeudi',C:'Vendredi'};
   const dn={0:'dimanche',1:'lundi',2:'mardi',3:'mercredi',4:'jeudi',5:'vendredi',6:'samedi'};
-  if(dn[new Date().getDay()]===map[t].toLowerCase()) return "Aujourd'hui";
+  const label = map[t] || '';
+  if(!label) return '';
+  if(dn[new Date().getDay()]===label.toLowerCase()) return "Aujourd'hui";
   const nums={lundi:1,mardi:2,mercredi:3,jeudi:4,vendredi:5,samedi:6,dimanche:0};
-  const diff=(nums[map[t].toLowerCase()]-new Date().getDay()+7)%7||7;
-  return diff===1?'Demain':map[t];
+  const diff=(nums[label.toLowerCase()]-new Date().getDay()+7)%7||7;
+  return diff===1?'Demain':label;
 }
-
 // ================================================================
 // SESSION
 // ================================================================
@@ -652,12 +761,19 @@ function renderSession(){
   document.getElementById('session-date').textContent=fmtDate(new Date().toISOString().split('T')[0]);
   phase=0; card=0; rating=0;
   document.querySelectorAll('.star').forEach(s=>s.classList.remove('active'));
+  buildTabBar();
   goPhase(0);
+}
+
+function buildTabBar(){
+  const bar = document.querySelector('.tab-bar');
+  const keys = Object.keys(P);
+  bar.innerHTML = keys.map(k=>`<button class="tab-btn ${k===tab?'active':''}" data-tab="${k}" onclick="switchTab('${k}')" style="${k===tab?`color:${P[k].color}`:''}">${k}</button>`).join('');
 }
 
 function switchTab(t){
   tab=t;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  buildTabBar();
   phase=0; card=0;
   goPhase(0);
 }
@@ -737,7 +853,7 @@ function buildWarmup(){
 
 function getProgressiveSets(){
   const firstId=P[tab].firstExo;
-  const sessions=db.seances.filter(s=>s.type===tab).sort((a,b)=>b.date.localeCompare(a.date));
+  const sessions=db.seances.filter(s=>s.programme_id===db.programme_actif && s.type===tab).sort((a,b)=>b.date.localeCompare(a.date));
   let ww=null;
   for(const s of sessions){
     const e=s.exercices&&s.exercices.find(e=>e.id===firstId);
@@ -759,7 +875,6 @@ function getProgressiveSets(){
     `↳ Charge de travail : ${ww} kg`
   ];
 }
-
 // ================================================================
 // SWIPE CARDS
 // ================================================================
@@ -767,6 +882,12 @@ function buildCards(){
   const exos=P[tab].exos;
   const col=P[tab].color;
   const track=document.getElementById('cardsTrack');
+
+  if(!exos.length){
+    track.innerHTML = `<div class="exercise-card-wrap"><div class="exercise-card"><div class="empty"><p>Ce programme n'a pas encore d'exercices détaillés.<br>Reviens bientôt.</p></div></div></div>`;
+    document.getElementById('dots').innerHTML='';
+    return;
+  }
 
   track.innerHTML=exos.map((ex,i)=>{
     const lp=getLastPerf(ex.id);
@@ -825,6 +946,7 @@ function autofillExo(exoId, cardIndex){
 function updateCards(){
   const exos=P[tab].exos;
   const n=exos.length;
+  if(!n) return;
   const col=P[tab].color;
   const tc=tab.toLowerCase();
 
@@ -842,19 +964,17 @@ function updateCards(){
 
   if(card===n-1){
     next.textContent='Terminer →';
-    next.className='btn-card-nav next '+tc;
     next.onclick=()=>goPhase(2);
   } else {
     next.textContent='Suiv. →';
-    next.className='btn-card-nav next '+tc;
     next.onclick=nextCard;
   }
+  next.className='btn-card-nav next '+tc;
 }
 
 function nextCard(){ if(card<P[tab].exos.length-1){card++;updateCards();} }
 function prevCard(){ if(card>0){card--;updateCards();} }
 function goCard(i){ card=i; updateCards(); }
-
 function initSwipe(){
   const vp=document.getElementById('cardsViewport');
   // clone to remove old listeners
@@ -887,14 +1007,14 @@ function initSwipe(){
 }
 
 function getLastPerf(exoId){
-  const ss=db.seances.filter(s=>s.type===tab).sort((a,b)=>b.date.localeCompare(a.date));
+  const ss=db.seances.filter(s=>s.programme_id===db.programme_actif && s.type===tab).sort((a,b)=>b.date.localeCompare(a.date));
   for(const s of ss){ const e=s.exercices&&s.exercices.find(e=>e.id===exoId); if(e&&e.series&&e.series.length) return e.series; }
   return null;
 }
 
 // NEW: get the note from the last session for a given exercise
 function getLastNote(exoId){
-  const ss=db.seances.filter(s=>s.type===tab).sort((a,b)=>b.date.localeCompare(a.date));
+  const ss=db.seances.filter(s=>s.programme_id===db.programme_actif && s.type===tab).sort((a,b)=>b.date.localeCompare(a.date));
   for(const s of ss){ const e=s.exercices&&s.exercices.find(e=>e.id===exoId); if(e&&e.series&&e.series.length) return e.note||''; }
   return '';
 }
@@ -933,6 +1053,8 @@ function saveSession(){
     id:Date.now().toString(),
     date:new Date().toISOString().split('T')[0],
     type:tab,
+    programme_id: db.programme_actif,
+    seance_id: tab,
     duree_min:parseInt(document.getElementById('sessionDuration').value)||null,
     note_globale:rating,
     commentaire:document.getElementById('sessionComment').value,
@@ -946,7 +1068,6 @@ function saveSession(){
   goPhase(0);
   renderDash();
 }
-
 // ================================================================
 // TIMER
 // ================================================================
@@ -1014,12 +1135,11 @@ function renderHistory(){
   }).join('');
 }
 function toggleHist(d,c){document.getElementById(d).classList.toggle('open');document.getElementById(c).classList.toggle('open');}
-
 // ================================================================
 // PROGRESS
 // ================================================================
 function renderProgress(){
-  const all=['PUSH','PULL','LEGS'].flatMap(t=>P[t].exos.map(e=>({...e,type:t})));
+  const all=Object.keys(P).flatMap(t=>P[t].exos.map(e=>({...e,type:t})));
   document.getElementById('progress-list').innerHTML=all.map((ex,i)=>{
     const hist=getExoHist(ex.id,ex.type);
     const col=P[ex.type].color;
@@ -1051,7 +1171,7 @@ function renderProgress(){
 }
 
 function getExoHist(id,type){
-  return db.seances.filter(s=>s.type===type).sort((a,b)=>a.date.localeCompare(b.date))
+  return db.seances.filter(s=>s.programme_id===db.programme_actif && s.type===type).sort((a,b)=>a.date.localeCompare(b.date))
     .map(s=>{const e=s.exercices&&s.exercices.find(e=>e.id===id);return e?{date:s.date,sets:e.series}:null;})
     .filter(Boolean);
 }
@@ -1059,7 +1179,6 @@ function getTrend(h){if(h.length<2)return '—';const c=cmpPerf(h[h.length-1].se
 function getBest(h){if(!h.length)return '—';return h.reduce((b,c)=>vol(c.sets)>vol(b.sets)?c:b).sets.map(s=>`${s.poids}kg×${s.reps}`).join(' / ');}
 function vol(sets){return sets.reduce((s,x)=>s+(x.poids||0)*(x.reps||0),0);}
 function cmpPerf(a,b){if(!a||!b||!a.length||!b.length)return 0;return vol(a)>vol(b)?1:vol(a)<vol(b)?-1:0;}
-
 // ================================================================
 // EXPORT / IMPORT / RESET
 // ================================================================
@@ -1073,14 +1192,14 @@ function exportData(){
 document.getElementById('fileInput').addEventListener('change',function(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.seances!==undefined){db=d;saveDB();renderDash();showToast('Données importées ✓');}else showToast('Fichier invalide');}catch{showToast('Erreur lecture');}};
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.seances!==undefined){db=migrateDB(d);saveDB();P=PROGRAMS_CATALOG[db.programme_actif]||PPL;renderDash();showToast('Données importées ✓');}else showToast('Fichier invalide');}catch{showToast('Erreur lecture');}};
   r.readAsText(f);this.value='';
 });
 function confirmReset(){
   document.getElementById('modalTitle').textContent='Réinitialiser ?';
   document.getElementById('modalBody').textContent='Toutes tes séances et métriques seront supprimées. Irréversible.';
   document.getElementById('modalConfirm').textContent='Tout supprimer';
-  document.getElementById('modalConfirm').onclick=()=>{localStorage.removeItem('wdb');db=newDB();saveDB();renderDash();closeModal();showToast('Données effacées');};
+  document.getElementById('modalConfirm').onclick=()=>{localStorage.removeItem('wdb');db=newDB();P=PPL;saveDB();renderDash();closeModal();showToast('Données effacées');};
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
