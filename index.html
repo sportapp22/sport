@@ -304,6 +304,12 @@ nav button svg { width: 22px; height: 22px; }
 .week-edit-select { flex: 1; max-width: 160px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--bg); }
 .week-edit-note { font-size: 12px; color: var(--text2); margin-top: 10px; }
 
+/* REPRISE APRÈS INTERRUPTION (Phase 3) */
+.reprise-alert { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+.reprise-alert-title { font-size: 13px; font-weight: 700; color: var(--warn); margin-bottom: 4px; }
+.reprise-alert-body { font-size: 13px; color: #92400e; line-height: 1.5; }
+.reprise-alert.compact { padding: 12px 14px; margin: 0 0 14px; }
+
 /* TOAST */
 .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-120px); background: var(--text); color: white; padding: 11px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 500; transition: transform 0.3s; white-space: nowrap; box-shadow: var(--shadow-md); }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -353,6 +359,7 @@ nav button svg { width: 22px; height: 22px; }
     <h1 id="dash-greeting">Bonjour 👋</h1>
     <p id="dash-date"></p>
   </div>
+  <div id="reprise-alert"></div>
   <div class="next-session">
     <div class="label">Prochaine séance</div>
     <div class="session-name" id="next-name">—</div>
@@ -417,6 +424,7 @@ nav button svg { width: 22px; height: 22px; }
 
   <!-- Phase 0: Warmup -->
   <div id="ph0">
+    <div id="session-reprise-alert"></div>
     <div id="warmup-content"></div>
     <button class="btn-next-phase" id="btn-warmup-next" onclick="goPhase(1)">Passer aux exercices →</button>
   </div>
@@ -523,7 +531,7 @@ nav button svg { width: 22px; height: 22px; }
     <h3>À propos</h3>
     <div class="card" style="margin-bottom:0">
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        <strong style="color:var(--text)">Workout Tracker v1.4</strong><br>
+        <strong style="color:var(--text)">Workout Tracker v1.5</strong><br>
         Application locale · données dans Chrome<br>
         <span style="color:var(--warn)">⚠ Exporte régulièrement tes données !</span>
       </div>
@@ -882,6 +890,56 @@ function renderDash(){
   document.getElementById('next-name').style.color=(P[next.seance_id]||{}).color||'var(--text)';
   document.getElementById('next-day').textContent=next.label;
   document.getElementById('btn-go').className='btn-primary '+next.seance_id.toLowerCase();
+
+  document.getElementById('reprise-alert').innerHTML = buildRepriseAlertHTML();
+}
+
+// ================================================================
+// REPRISE APRÈS INTERRUPTION (Phase 3)
+// ================================================================
+// Barème repris tel quel de protocole-de-reprise.md. `min`/`max` en
+// jours écoulés depuis la dernière séance loggée (tous programmes
+// confondus : une interruption d'entraînement reste une interruption,
+// qu'elle se termine par une reprise en Full Body x3 ou en PPL).
+const REPRISE_BAREME = [
+  { min:4,  max:7,        reduction:'10 à 15 %',
+    conseil:"Charges réduites d'environ 10 à 15 % sur cette séance de reprise, retour au poids habituel dès la séance suivante si les sensations sont bonnes." },
+  { min:8,  max:14,       reduction:'~20 %',
+    conseil:"Une séance de reprise en Full Body allégé (charges réduites d'environ 20 %, moins de séries par exercice), puis remontée progressive sur les 2 séances suivantes." },
+  { min:15, max:28,       reduction:'25 à 30 %',
+    conseil:"Reprise sur une semaine complète en mode allégé (2 séances plutôt que 3, charges réduites d'environ 25 à 30 %), puis retour progressif au rythme normal la semaine suivante." },
+  { min:29, max:Infinity, reduction:'~40 %',
+    conseil:"Considère les 2 premières semaines comme un nouveau bloc de réadaptation : rythme habituel de 3 séances mais charges réduites d'environ 40 % par rapport au dernier niveau connu, avec remontée progressive sur 3 à 4 semaines." }
+];
+
+// Nombre de jours écoulés depuis la dernière séance loggée, tous
+// programmes confondus. Renvoie null si aucune séance n'a jamais été
+// enregistrée (pas d'interruption à signaler dans ce cas : c'est un
+// démarrage, pas une reprise).
+function getDaysSinceLastSeance(){
+  const ls=[...db.seances].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(!ls) return null;
+  const last=new Date(ls.date+'T00:00:00');
+  const today=new Date(); today.setHours(0,0,0,0);
+  return Math.round((today-last)/86400000);
+}
+
+// Renvoie le palier du barème correspondant, ou null si l'interruption
+// est trop courte pour justifier un ajustement (règle de base :
+// reprise normale jusqu'à 3 jours, aucun ajustement nécessaire).
+function getReprisePalier(days){
+  if(days===null || days<=3) return null;
+  return REPRISE_BAREME.find(p=>days>=p.min && days<=p.max) || null;
+}
+
+function buildRepriseAlertHTML(compact){
+  const days = getDaysSinceLastSeance();
+  const palier = getReprisePalier(days);
+  if(!palier) return '';
+  return `<div class="reprise-alert${compact?' compact':''}">
+    <div class="reprise-alert-title">⚠ Reprise après ${days} jours sans séance</div>
+    <div class="reprise-alert-body">${palier.conseil}</div>
+  </div>`;
 }
 
 // Rotation basée sur l'historique (ancien comportement) — sert de repli
@@ -1148,6 +1206,7 @@ function goPhase(p){
 // WARMUP
 // ================================================================
 function buildWarmup(){
+  document.getElementById('session-reprise-alert').innerHTML = buildRepriseAlertHTML(true);
   const wu=P[tab].warmup;
   const col=P[tab].color;
   document.getElementById('btn-warmup-next').style.background=col;
