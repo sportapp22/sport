@@ -463,7 +463,7 @@ nav button svg { width: 22px; height: 22px; }
     <h3>À propos</h3>
     <div class="card" style="margin-bottom:0">
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        <strong style="color:var(--text)">Workout Tracker v1.2</strong><br>
+        <strong style="color:var(--text)">Workout Tracker v1.3</strong><br>
         Application locale · données dans Chrome<br>
         <span style="color:var(--warn)">⚠ Exporte régulièrement tes données !</span>
       </div>
@@ -561,14 +561,70 @@ const PPL = {
     }
   }
 };
-
-// Full Body x3 (squelette Phase 1 — à compléter avec le détail exact
-// de programme-entrainement-detail.md dans une prochaine itération).
-// Placeholder volontaire pour ne pas bloquer la Phase 0 (modèle de données).
+// Full Body x3 (Phase 1 — détail complet depuis
+// programme-entrainement-detail.md + poids de départ depuis
+// base-reprise-poids.md). Squat en variante Smith machine, tirage
+// vertical/soulevé de terre en variantes accessibles.
 const FBX3 = {
-  A: { color:'#2563eb', firstExo:'a_squat', exos:[], warmup: PPL.LEGS.warmup },
-  B: { color:'#dc4f2a', firstExo:'b_bench', exos:[], warmup: PPL.PUSH.warmup },
-  C: { color:'#1a7f5e', firstExo:'c_row',   exos:[], warmup: PPL.PULL.warmup }
+  A: {
+    color:'#2563eb', firstExo:'a_squat_smith',
+    exos:[
+      {id:'a_squat_smith',   nom:'Squat Smith machine',            alias:[], s:4, repos:'2 min',     startKg:27.5, obj:'4×8 stable → +5 kg (redescendre à 6)',            tip:'Reste sur la charge tant que les 4 séries n\'atteignent pas 8 reps. Deux séances de suite à 8 reps sur toutes les séries → +5 kg, tu redescends à 6 reps.'},
+      {id:'a_trap_bar_dl',   nom:'Trap bar deadlift',               alias:['RDL haltères si indisponible'], s:3, repos:'2–2,5 min', startKg:12, obj:'3×6 stable → +5 kg (redescendre à 5)',            tip:'Reste tant que les 3 séries n\'atteignent pas 6 reps. Deux séances de suite à 6 reps → +5 kg, tu redescends à 5 reps.'},
+      {id:'a_dc_barre',      nom:'Développé couché barre',          alias:[], s:4, repos:'2 min',     startKg:32.5, obj:'4×8 stable → +2,5 kg (redescendre à 6)',          tip:'Reste tant que les 4 séries n\'atteignent pas 8 reps. Deux séances de suite à 8 reps → +2,5 kg, tu redescends à 6 reps.'},
+      {id:'a_rowing_barre',  nom:'Rowing barre buste penché',       alias:[], s:4, repos:'1,5–2 min', startKg:22.5, obj:'4×10 stable → +2,5 kg (redescendre à 8)',         tip:'Reste tant que les 4 séries n\'atteignent pas 10 reps. Deux séances de suite à 10 reps, contraction en haut → +2,5 kg, tu redescends à 8 reps.'},
+      {id:'a_curl_halteres', nom:'Curl biceps haltères',            alias:[], s:3, repos:'1 min',     startKg:9, obj:'3×12 stable → +1-2 kg/haltère (redescendre à 10)', tip:'Reste tant que les 3 séries n\'atteignent pas 12 reps. Deux séances de suite → +1 à 2 kg par haltère, tu redescends à 10 reps.'},
+      {id:'a_ext_triceps',   nom:'Extension triceps poulie haute',  alias:[], s:3, repos:'1 min',     startKg:13.5, obj:'3×12 stable → +2,5-5 kg (redescendre à 10)',      tip:'Reste tant que les 3 séries n\'atteignent pas 12 reps. Deux séances de suite → +2,5 à 5 kg, tu redescends à 10 reps. Dernier exercice, pas de repos avant la suite.'}
+    ],
+    warmup:{
+      general:{title:'Cardio léger', sub:'5 min', items:[{n:'Vélo ou rameur',d:'5 min, allure modérée, jusqu\'à légère transpiration'}]},
+      activation:{title:'Mobilité articulaire', sub:'~2 min, 15s de transition entre mouvements', goal:'Préparer chevilles, hanches et épaules avant la montée en charge', items:[
+        {n:'Rotations de chevilles',d:'10 répétitions par sens'},
+        {n:'Cercles de hanches',d:'10 répétitions par sens'},
+        {n:'Rotations d\'épaules',d:'10 en avant + 10 en arrière'},
+        {n:'Air squats à vide',d:'15 répétitions, tempo lent'}
+      ]},
+      progressive:{title:'Montée en charge progressive', sub:'Squat Smith (barre à vide → 50% → 70% → 85%) puis Trap bar deadlift (50% → 75%)', goal:'Hanches déjà chaudes grâce au squat pour le deadlift — seulement après tu attaques tes vraies séries'}
+    }
+  },
+  B: {
+    color:'#dc4f2a', firstExo:'b_presse_cuisses',
+    exos:[
+      {id:'b_presse_cuisses', nom:'Presse à cuisses',              alias:['Smith squat pieds avancés si indisponible'], s:4, repos:'1,5–2 min', startKg:55, obj:'4×12 stable → +10 kg (redescendre à 10)',           tip:'Reste tant que les 4 séries n\'atteignent pas 12 reps. Deux séances de suite → +10 kg, tu redescends à 10 reps.'},
+      {id:'b_rdl_halteres',   nom:'Soulevé de terre roumain haltères', alias:[], s:3, repos:'1,5–2 min', startKg:13, obj:'3×12 stable → +2 kg/haltère (redescendre à 10)',    tip:'Reste tant que les 3 séries n\'atteignent pas 12 reps. Contrôlé, étirement des ischios à la descente. Deux séances de suite → +2 kg par haltère, tu redescends à 10 reps.'},
+      {id:'b_dev_militaire',  nom:'Développé militaire haltères',  alias:[], s:4, repos:'1,5 min',    startKg:9, obj:'4×10 stable → +2 kg/haltère (redescendre à 8)',      tip:'Reste tant que les 4 séries n\'atteignent pas 10 reps. Deux séances de suite → +2 kg par haltère, tu redescends à 8 reps.'},
+      {id:'b_tirage_vertical',nom:'Tirage vertical poulie (lat pulldown)', alias:[], s:4, repos:'1,5 min', startKg:27.5, obj:'4×12 stable → +2,5-5 kg (redescendre à 10)',    tip:'Reste tant que les 4 séries n\'atteignent pas 12 reps. Contraction en bas. Deux séances de suite → +2,5 à 5 kg, tu redescends à 10 reps.'},
+      {id:'b_elev_lat',       nom:'Élévations latérales haltères', alias:[], s:3, repos:'45–60 s',    startKg:5, obj:'3×15 stable → +1 kg/haltère seulement (redescendre à 12)', tip:'Reste tant que les 3 séries n\'atteignent pas 15 reps. Exercice sensible à l\'excès de charge : deux séances de suite → +1 kg par haltère seulement, tu redescends à 12 reps.'},
+      {id:'b_mollets',        nom:'Mollets debout ou presse',      alias:[], s:3, repos:'45–60 s',    startKg:35, obj:'3×15 stable → +5-10 kg (redescendre à 12)',        tip:'Reste tant que les 3 séries n\'atteignent pas 15 reps. Deux séances de suite → +5 à 10 kg, tu redescends à 12 reps. Dernier exercice.'}
+    ],
+    warmup:{
+      general:{title:'Cardio léger', sub:'5 min', items:[{n:'Vélo ou rameur',d:'5 min, allure modérée'}]},
+      activation:{title:'Mobilité articulaire (hanches & épaules)', sub:'~2 min, 15s de transition', goal:'Accent sur hanches et épaules avant la presse à cuisses et le développé militaire', items:[
+        {n:'Cercles de hanches',d:'10 répétitions par sens'},
+        {n:'Fentes marchées à vide',d:'8 par jambe'},
+        {n:'Rotations d\'épaules',d:'10 en avant + 10 en arrière'},
+        {n:'Rotations de bras (moulinet)',d:'10 par sens'}
+      ]},
+      progressive:{title:'Montée en charge progressive', sub:'Presse à cuisses (léger → 60% → 80%) puis développé militaire haltères', goal:'Épaules à réchauffer spécifiquement même si le bas du corps est déjà chaud — seulement après tu attaques tes vraies séries'}
+    }
+  },
+  C: {
+    color:'#1a7f5e', firstExo:'c_squat_smith',
+    exos:[
+      {id:'c_squat_smith',   nom:'Squat Smith machine',      alias:[], s:3, repos:'1,5 min', startKg:25,   obj:'3×10 stable → +5 kg (redescendre à 8)',       tip:'Charge légèrement sous celle du mardi. Reste tant que les 3 séries n\'atteignent pas 10 reps. Deux séances de suite → +5 kg, tu redescends à 8 reps.'},
+      {id:'c_dev_incline',   nom:'Développé incliné haltères', alias:[], s:3, repos:'1,5 min', startKg:11, obj:'3×10 stable → +2 kg/haltère (redescendre à 8)', tip:'Reste tant que les 3 séries n\'atteignent pas 10 reps. Deux séances de suite → +2 kg par haltère, tu redescends à 8 reps.'},
+      {id:'c_rowing_poulie', nom:'Rowing poulie basse assis', alias:[], s:3, repos:'1,5 min', startKg:22.5, obj:'3×10 stable → +2,5-5 kg (redescendre à 8)',   tip:'Contraction en fin de mouvement. Reste tant que les 3 séries n\'atteignent pas 10 reps. Deux séances de suite → +2,5 à 5 kg, tu redescends à 8 reps.'},
+      {id:'c_militaire_opt', nom:'Développé militaire ou élévations frontales', alias:['optionnel'], s:2, repos:'1 min', startKg:9, obj:'Pas de suivi prioritaire',   tip:'Exercice secondaire du jour : pas de suivi de progression prioritaire, c\'est celui qu\'on coupe en premier si le temps presse. Dernier exercice — pas d\'isolation biceps/triceps/mollets ce jour-là, format court.'}
+    ],
+    warmup:{
+      general:{title:'Cardio léger', sub:'3 min', items:[{n:'Vélo ou rameur',d:'3 min, allure modérée'}]},
+      activation:{title:'Mobilité rapide', sub:'~1 min, 10s de transition', goal:'Format raccourci, charges déjà connues depuis mardi', items:[
+        {n:'Air squats à vide',d:'10 répétitions'},
+        {n:'Rotations d\'épaules',d:'8 en avant + 8 en arrière'}
+      ]},
+      progressive:{title:'Montée en charge courte', sub:'Squat Smith (1 seul palier : barre à vide → 70%), puis 1 série légère de développé incliné et de rowing poulie basse', goal:'Le haut du corps est déjà en partie chaud grâce au squat — seulement après tu attaques tes vraies séries'}
+    }
+  }
 };
 
 const PROGRAMS_CATALOG = { ppl: PPL, fbx3: FBX3 };
@@ -875,6 +931,7 @@ function getProgressiveSets(){
     `↳ Charge de travail : ${ww} kg`
   ];
 }
+
 // ================================================================
 // SWIPE CARDS
 // ================================================================
@@ -895,10 +952,13 @@ function buildCards(){
     // Build autofill button only if there is a last performance
     const autofillBtn=lp?`<button class="btn-autofill" onclick="autofillExo('${ex.id}',${i})">↩ Reprendre la dernière séance</button>`:'';
     let setsHTML='';
+    // Tant qu'il n'y a pas d'historique, on suggère le poids de départ
+    // (base-reprise-poids.md) comme placeholder plutôt qu'une valeur figée.
+    const poidsPlaceholder = (!lp && ex.startKg) ? `~${ex.startKg}` : 'kg';
     for(let s=0;s<ex.s;s++){
       setsHTML+=`<div class="set-row">
         <div class="set-num">${s+1}</div>
-        <input type="number" class="set-input" data-exo="${ex.id}" data-set="${s}" data-field="poids" placeholder="kg" inputmode="decimal" step="0.5">
+        <input type="number" class="set-input" data-exo="${ex.id}" data-set="${s}" data-field="poids" placeholder="${poidsPlaceholder}" inputmode="decimal" step="0.5">
         <input type="number" class="set-input" data-exo="${ex.id}" data-set="${s}" data-field="reps" placeholder="reps" inputmode="numeric">
       </div>`;
     }
@@ -975,6 +1035,7 @@ function updateCards(){
 function nextCard(){ if(card<P[tab].exos.length-1){card++;updateCards();} }
 function prevCard(){ if(card>0){card--;updateCards();} }
 function goCard(i){ card=i; updateCards(); }
+
 function initSwipe(){
   const vp=document.getElementById('cardsViewport');
   // clone to remove old listeners
@@ -1068,6 +1129,7 @@ function saveSession(){
   goPhase(0);
   renderDash();
 }
+
 // ================================================================
 // TIMER
 // ================================================================
@@ -1135,6 +1197,7 @@ function renderHistory(){
   }).join('');
 }
 function toggleHist(d,c){document.getElementById(d).classList.toggle('open');document.getElementById(c).classList.toggle('open');}
+
 // ================================================================
 // PROGRESS
 // ================================================================
@@ -1179,6 +1242,7 @@ function getTrend(h){if(h.length<2)return '—';const c=cmpPerf(h[h.length-1].se
 function getBest(h){if(!h.length)return '—';return h.reduce((b,c)=>vol(c.sets)>vol(b.sets)?c:b).sets.map(s=>`${s.poids}kg×${s.reps}`).join(' / ');}
 function vol(sets){return sets.reduce((s,x)=>s+(x.poids||0)*(x.reps||0),0);}
 function cmpPerf(a,b){if(!a||!b||!a.length||!b.length)return 0;return vol(a)>vol(b)?1:vol(a)<vol(b)?-1:0;}
+
 // ================================================================
 // EXPORT / IMPORT / RESET
 // ================================================================
