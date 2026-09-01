@@ -810,6 +810,9 @@ function getNextDay(t){
   const diff=(nums[label.toLowerCase()]-new Date().getDay()+7)%7||7;
   return diff===1?'Demain':label;
 }
+// ================================================================
+// SESSION
+// ================================================================
 function renderSession(){
   document.getElementById('session-date').textContent=fmtDate(new Date().toISOString().split('T')[0]);
   phase=0; card=0; rating=0;
