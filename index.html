@@ -270,6 +270,46 @@ nav button svg { width: 22px; height: 22px; }
 .program-select { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--surface); margin-bottom: 8px; }
 .program-select:focus { outline: none; border-color: var(--accent); }
 
+/* WEEK LINK (dashboard entry point, Phase 2) */
+.week-link { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow); font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer; }
+.week-link span.arrow { color: var(--text3); }
+
+/* WEEK VIEW (Phase 2) */
+.week-nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.week-nav-btn { border: 1.5px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 14px; font-weight: 600; color: var(--text2); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.week-nav-label { font-size: 13px; color: var(--text2); font-weight: 500; }
+.week-back { font-size: 13px; color: var(--accent); font-weight: 600; cursor: pointer; margin-bottom: 4px; display: inline-block; }
+
+.week-day { background: var(--surface); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; touch-action: pan-y; transition: box-shadow 0.15s; }
+.week-day.today { border: 1.5px solid var(--accent); }
+.week-day.dragging { box-shadow: var(--shadow-md); z-index: 10; position: relative; opacity: 0.95; }
+.week-day.drop-target { background: var(--accent-light); }
+.week-day-date { width: 44px; flex-shrink: 0; text-align: center; }
+.week-day-num { font-size: 18px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.week-day-name { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
+.week-day-body { flex: 1; min-width: 0; }
+.week-day-seance { font-size: 14px; font-weight: 700; }
+.week-day-rest { font-size: 13px; color: var(--text3); }
+.week-day-done { font-size: 11px; color: var(--success); font-weight: 600; margin-top: 1px; }
+.week-drag-handle { flex-shrink: 0; color: var(--text3); font-size: 18px; padding: 6px; cursor: grab; touch-action: none; user-select: none; }
+.week-hint { text-align: center; font-size: 12px; color: var(--text3); margin: 4px 0 14px; }
+
+.week-edit-toggle { width: 100%; border: 1.5px dashed var(--border); background: var(--surface); border-radius: var(--radius-sm); padding: 12px; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; font-family: 'DM Sans', sans-serif; margin: 6px 0 16px; }
+.week-edit-panel { display: none; background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.week-edit-panel.open { display: block; }
+.week-edit-panel h3 { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+.week-edit-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.week-edit-row:last-of-type { border-bottom: none; }
+.week-edit-day { font-size: 13px; font-weight: 600; color: var(--text); text-transform: capitalize; }
+.week-edit-select { flex: 1; max-width: 160px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--bg); }
+.week-edit-note { font-size: 12px; color: var(--text2); margin-top: 10px; }
+
+/* REPRISE APRÈS INTERRUPTION (Phase 3) */
+.reprise-alert { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+.reprise-alert-title { font-size: 13px; font-weight: 700; color: var(--warn); margin-bottom: 4px; }
+.reprise-alert-body { font-size: 13px; color: #92400e; line-height: 1.5; }
+.reprise-alert.compact { padding: 12px 14px; margin: 0 0 14px; }
+
 /* TOAST */
 .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-120px); background: var(--text); color: white; padding: 11px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 500; transition: transform 0.3s; white-space: nowrap; box-shadow: var(--shadow-md); }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -319,11 +359,16 @@ nav button svg { width: 22px; height: 22px; }
     <h1 id="dash-greeting">Bonjour 👋</h1>
     <p id="dash-date"></p>
   </div>
+  <div id="reprise-alert"></div>
   <div class="next-session">
     <div class="label">Prochaine séance</div>
     <div class="session-name" id="next-name">—</div>
     <div class="session-day" id="next-day"></div>
     <button class="btn-primary" id="btn-go" onclick="goToSession()">Commencer →</button>
+  </div>
+  <div class="week-link" onclick="showPage('week')">
+    <span>📅 Voir la semaine</span>
+    <span class="arrow">→</span>
   </div>
   <div class="dash-grid">
     <div class="dash-tile accent-blue">
@@ -379,6 +424,7 @@ nav button svg { width: 22px; height: 22px; }
 
   <!-- Phase 0: Warmup -->
   <div id="ph0">
+    <div id="session-reprise-alert"></div>
     <div id="warmup-content"></div>
     <button class="btn-next-phase" id="btn-warmup-next" onclick="goPhase(1)">Passer aux exercices →</button>
   </div>
@@ -416,6 +462,28 @@ nav button svg { width: 22px; height: 22px; }
       </div>
       <button class="btn-primary" id="btnSave" onclick="saveSession()">Sauvegarder</button>
     </div>
+  </div>
+</div>
+
+<!-- ====== WEEK (Phase 2) ====== -->
+<div class="page" id="page-week">
+  <div class="page-header">
+    <span class="week-back" onclick="showPage('dash', document.querySelectorAll('nav button')[0])">← Accueil</span>
+    <h1>Semaine</h1>
+    <p>Séances déplaçables pour cette semaine uniquement</p>
+  </div>
+  <div class="week-nav-row">
+    <button class="week-nav-btn" onclick="shiftWeek(-1)">← Préc.</button>
+    <span class="week-nav-label" id="week-range"></span>
+    <button class="week-nav-btn" onclick="shiftWeek(1)">Suiv. →</button>
+  </div>
+  <div id="week-list"></div>
+  <div class="week-hint">↕ Maintiens l'icône ⠿ et glisse pour déplacer une séance</div>
+  <button class="week-edit-toggle" onclick="toggleWeekEdit()">✎ Modifier le planning type (permanent)</button>
+  <div class="week-edit-panel" id="weekEditPanel">
+    <h3>Planning type — <span id="week-edit-programme"></span></h3>
+    <div id="week-edit-rows"></div>
+    <div class="week-edit-note">Ce planning s'applique toutes les semaines. Un déplacement ponctuel dans la vue Semaine ne le modifie pas.</div>
   </div>
 </div>
 
@@ -463,7 +531,7 @@ nav button svg { width: 22px; height: 22px; }
     <h3>À propos</h3>
     <div class="card" style="margin-bottom:0">
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        <strong style="color:var(--text)">Workout Tracker v1.3</strong><br>
+        <strong style="color:var(--text)">Workout Tracker v1.5</strong><br>
         Application locale · données dans Chrome<br>
         <span style="color:var(--warn)">⚠ Exporte régulièrement tes données !</span>
       </div>
@@ -629,6 +697,23 @@ const FBX3 = {
 
 const PROGRAMS_CATALOG = { ppl: PPL, fbx3: FBX3 };
 
+// ================================================================
+// PLANNING (Phase 2) — planning type par défaut + jours de la semaine
+// ================================================================
+// Index identique à Date#getDay() : 0 = dimanche ... 6 = samedi.
+const DOW_FR = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+// Planning type par défaut, uniquement pour Full Body x3 (roadmap Phase 2 :
+// "planning type par défaut (mardi/jeudi/vendredi pour Full Body x3), à
+// adapter si PPL est actif" — PPL n'a volontairement pas de défaut, il
+// garde l'ancien comportement en rotation tant que rien n'est configuré).
+const DEFAULT_PLANNING_TYPE = {
+  fbx3: {
+    mardi:    { programme_id:'fbx3', seance_id:'A', heure:null },
+    jeudi:    { programme_id:'fbx3', seance_id:'B', heure:null },
+    vendredi: { programme_id:'fbx3', seance_id:'C', heure:null }
+  }
+};
+
 // P pointe toujours vers le programme actif courant (rétro-compatibilité
 // avec tout le code existant qui référence P[tab]).
 let P = PPL;
@@ -709,6 +794,7 @@ function setActiveProgram(id){
   if(!PROGRAMS_CATALOG[id]) return;
   db.programme_actif = id;
   P = PROGRAMS_CATALOG[id];
+  ensureDefaultPlanning();
   saveDB();
   tab = Object.keys(P)[0];
   phase = 0; card = 0;
@@ -716,8 +802,19 @@ function setActiveProgram(id){
   showToast('Programme changé ✓');
 }
 
+// Amorce le planning type avec le défaut du programme actif, seulement si
+// aucun jour n'est encore configuré (ne touche jamais à un planning déjà
+// personnalisé par l'utilisateur, et n'écrase jamais planning.exceptions).
+function ensureDefaultPlanning(){
+  if(Object.keys(db.planning.type).length === 0 && DEFAULT_PLANNING_TYPE[db.programme_actif]){
+    db.planning.type = JSON.parse(JSON.stringify(DEFAULT_PLANNING_TYPE[db.programme_actif]));
+    saveDB();
+  }
+}
+
 let db = loadDB();
 P = PROGRAMS_CATALOG[db.programme_actif] || PPL;
+ensureDefaultPlanning();
 
 let tab = Object.keys(P)[0];
 let phase = 0;
@@ -739,10 +836,11 @@ function showPage(id, btn){
   if(id==='history')  renderHistory();
   if(id==='progress') renderProgress();
   if(id==='settings') renderSettings();
+  if(id==='week')     renderWeek();
 }
 
 function goToSession(){
-  tab = getNextTab();
+  tab = getNextSeance().seance_id;
   switchTab(tab);
   showPage('session', document.querySelectorAll('nav button')[1]);
 }
@@ -787,29 +885,283 @@ function renderDash(){
     document.getElementById('d-last-date').textContent=fmtDate(ls.date);
   }
 
-  const next=getNextTab();
-  document.getElementById('next-name').textContent=next;
-  document.getElementById('next-name').style.color=P[next].color;
-  document.getElementById('next-day').textContent=getNextDay(next);
-  document.getElementById('btn-go').className='btn-primary '+next.toLowerCase();
+  const next=getNextSeance();
+  document.getElementById('next-name').textContent=next.seance_id;
+  document.getElementById('next-name').style.color=(P[next.seance_id]||{}).color||'var(--text)';
+  document.getElementById('next-day').textContent=next.label;
+  document.getElementById('btn-go').className='btn-primary '+next.seance_id.toLowerCase();
+
+  document.getElementById('reprise-alert').innerHTML = buildRepriseAlertHTML();
 }
 
+// ================================================================
+// REPRISE APRÈS INTERRUPTION (Phase 3)
+// ================================================================
+// Barème repris tel quel de protocole-de-reprise.md. `min`/`max` en
+// jours écoulés depuis la dernière séance loggée (tous programmes
+// confondus : une interruption d'entraînement reste une interruption,
+// qu'elle se termine par une reprise en Full Body x3 ou en PPL).
+const REPRISE_BAREME = [
+  { min:4,  max:7,        reduction:'10 à 15 %',
+    conseil:"Charges réduites d'environ 10 à 15 % sur cette séance de reprise, retour au poids habituel dès la séance suivante si les sensations sont bonnes." },
+  { min:8,  max:14,       reduction:'~20 %',
+    conseil:"Une séance de reprise en Full Body allégé (charges réduites d'environ 20 %, moins de séries par exercice), puis remontée progressive sur les 2 séances suivantes." },
+  { min:15, max:28,       reduction:'25 à 30 %',
+    conseil:"Reprise sur une semaine complète en mode allégé (2 séances plutôt que 3, charges réduites d'environ 25 à 30 %), puis retour progressif au rythme normal la semaine suivante." },
+  { min:29, max:Infinity, reduction:'~40 %',
+    conseil:"Considère les 2 premières semaines comme un nouveau bloc de réadaptation : rythme habituel de 3 séances mais charges réduites d'environ 40 % par rapport au dernier niveau connu, avec remontée progressive sur 3 à 4 semaines." }
+];
+
+// Nombre de jours écoulés depuis la dernière séance loggée, tous
+// programmes confondus. Renvoie null si aucune séance n'a jamais été
+// enregistrée (pas d'interruption à signaler dans ce cas : c'est un
+// démarrage, pas une reprise).
+function getDaysSinceLastSeance(){
+  const ls=[...db.seances].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(!ls) return null;
+  const last=new Date(ls.date+'T00:00:00');
+  const today=new Date(); today.setHours(0,0,0,0);
+  return Math.round((today-last)/86400000);
+}
+
+// Renvoie le palier du barème correspondant, ou null si l'interruption
+// est trop courte pour justifier un ajustement (règle de base :
+// reprise normale jusqu'à 3 jours, aucun ajustement nécessaire).
+function getReprisePalier(days){
+  if(days===null || days<=3) return null;
+  return REPRISE_BAREME.find(p=>days>=p.min && days<=p.max) || null;
+}
+
+function buildRepriseAlertHTML(compact){
+  const days = getDaysSinceLastSeance();
+  const palier = getReprisePalier(days);
+  if(!palier) return '';
+  return `<div class="reprise-alert${compact?' compact':''}">
+    <div class="reprise-alert-title">⚠ Reprise après ${days} jours sans séance</div>
+    <div class="reprise-alert-body">${palier.conseil}</div>
+  </div>`;
+}
+
+// Rotation basée sur l'historique (ancien comportement) — sert de repli
+// pour un programme sans planning type défini (ex. PPL tant qu'aucun
+// planning n'a été configuré dans la vue Semaine).
 function getNextTab(){
   const o=Object.keys(P);
   const ls=[...db.seances].filter(s=>s.programme_id===db.programme_actif).sort((a,b)=>b.date.localeCompare(a.date))[0];
   return ls?o[(o.indexOf(ls.type)+1)%o.length]:o[0];
 }
 
-function getNextDay(t){
-  const map={PUSH:'Mardi',PULL:'Mercredi',LEGS:'Jeudi',A:'Mardi',B:'Jeudi',C:'Vendredi'};
-  const dn={0:'dimanche',1:'lundi',2:'mardi',3:'mercredi',4:'jeudi',5:'vendredi',6:'samedi'};
-  const label = map[t] || '';
-  if(!label) return '';
-  if(dn[new Date().getDay()]===label.toLowerCase()) return "Aujourd'hui";
-  const nums={lundi:1,mardi:2,mercredi:3,jeudi:4,vendredi:5,samedi:6,dimanche:0};
-  const diff=(nums[label.toLowerCase()]-new Date().getDay()+7)%7||7;
-  return diff===1?'Demain':label;
+// Renvoie la séance planifiée pour une date donnée (format YYYY-MM-DD),
+// en donnant la priorité aux exceptions ponctuelles sur le planning type.
+// Renvoie null si le jour est un jour de repos (pas de séance prévue).
+function getPlannedForDate(dateStr){
+  const exceptions = db.planning.exceptions || {};
+  if(Object.prototype.hasOwnProperty.call(exceptions, dateStr)){
+    const ex = exceptions[dateStr];
+    return (ex && ex.seance_id) ? ex : null;
+  }
+  const dow = DOW_FR[new Date(dateStr+'T00:00:00').getDay()];
+  const t = (db.planning.type || {})[dow];
+  return (t && t.seance_id) ? t : null;
 }
+
+function isSeanceLoggedOnDate(dateStr, programme_id, seance_id){
+  return db.seances.some(s=>s.date===dateStr && s.programme_id===programme_id && s.seance_id===seance_id);
+}
+
+// Détermine la prochaine séance à faire : priorité au planning (exceptions
+// puis planning type) pour le programme actif ; à défaut, repli sur la
+// rotation basée sur l'historique (comportement d'avant la Phase 2).
+function getNextSeance(){
+  const hasPlan = Object.keys(db.planning.type||{}).some(d=>{
+    const t=db.planning.type[d];
+    return t && t.programme_id===db.programme_actif && t.seance_id;
+  }) || Object.values(db.planning.exceptions||{}).some(ex=>ex && ex.programme_id===db.programme_actif && ex.seance_id);
+
+  if(hasPlan){
+    for(let i=0;i<14;i++){
+      const d=new Date(); d.setDate(d.getDate()+i);
+      const dateStr=d.toISOString().split('T')[0];
+      const planned=getPlannedForDate(dateStr);
+      if(planned && planned.programme_id===db.programme_actif && planned.seance_id){
+        if(i===0 && isSeanceLoggedOnDate(dateStr, planned.programme_id, planned.seance_id)) continue;
+        const label = i===0 ? "Aujourd'hui" : i===1 ? 'Demain' : capitalize(DOW_FR[d.getDay()]);
+        return { seance_id: planned.seance_id, programme_id: planned.programme_id, dateStr, label };
+      }
+    }
+  }
+  return { seance_id: getNextTab(), programme_id: db.programme_actif, dateStr: null, label: '' };
+}
+
+function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+// ================================================================
+// WEEK VIEW + DRAG & DROP (Phase 2)
+// ================================================================
+let weekOffset = 0; // 0 = semaine courante, décalage en semaines
+
+function getWeekDates(offset){
+  // Semaine lundi → dimanche, contenant "aujourd'hui + offset semaines".
+  const now = new Date();
+  const monday = new Date(now);
+  const delta = (now.getDay()+6)%7; // jours depuis lundi (lundi=0)
+  monday.setDate(now.getDate()-delta+offset*7);
+  const dates=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+  return dates;
+}
+
+function shiftWeek(delta){
+  weekOffset += delta;
+  renderWeek();
+}
+
+function renderWeek(){
+  weekOffset = weekOffset || 0;
+  const dates = getWeekDates(weekOffset);
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  document.getElementById('week-range').textContent =
+    weekOffset===0 ? "Cette semaine" : `${fmtShort(dates[0])} – ${fmtShort(dates[6])}`;
+
+  document.getElementById('week-list').innerHTML = dates.map(dateStr=>{
+    const d = new Date(dateStr+'T00:00:00');
+    const isToday = dateStr===todayStr;
+    const planned = getPlannedForDate(dateStr);
+    let body, hasSession=false;
+    if(planned){
+      const prog = PROGRAMS_CATALOG[planned.programme_id] || {};
+      const seance = prog[planned.seance_id] || {};
+      const done = isSeanceLoggedOnDate(dateStr, planned.programme_id, planned.seance_id);
+      hasSession = true;
+      body = `<div class="week-day-seance" style="color:${seance.color||'var(--text)'}">${planned.seance_id}</div>
+              ${done?'<div class="week-day-done">✓ Faite</div>':''}`;
+    } else {
+      body = `<div class="week-day-rest">Repos</div>`;
+    }
+    return `<div class="week-day${isToday?' today':''}" data-date="${dateStr}">
+      <div class="week-day-date">
+        <div class="week-day-num">${d.getDate()}</div>
+        <div class="week-day-name">${DOW_FR[d.getDay()].slice(0,3)}</div>
+      </div>
+      <div class="week-day-body">${body}</div>
+      ${hasSession?`<div class="week-drag-handle" data-date="${dateStr}">⠿</div>`:''}
+    </div>`;
+  }).join('');
+
+  initWeekDrag();
+  renderWeekEditPanel();
+}
+
+// ---- Drag & drop (pointer events, tactile + souris) ----
+let weekDrag = null;
+
+function initWeekDrag(){
+  document.querySelectorAll('.week-drag-handle').forEach(handle=>{
+    handle.addEventListener('pointerdown', onWeekDragStart);
+  });
+}
+
+function onWeekDragStart(e){
+  e.preventDefault();
+  const handle = e.currentTarget;
+  const row = handle.closest('.week-day');
+  weekDrag = {
+    row,
+    originDate: row.dataset.date,
+    startX: e.clientX,
+    startY: e.clientY,
+    pointerId: e.pointerId
+  };
+  try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+  row.classList.add('dragging');
+  document.addEventListener('pointermove', onWeekDragMove);
+  document.addEventListener('pointerup', onWeekDragEnd);
+  document.addEventListener('pointercancel', onWeekDragEnd);
+}
+
+function onWeekDragMove(e){
+  if(!weekDrag) return;
+  const dx = e.clientX - weekDrag.startX;
+  const dy = e.clientY - weekDrag.startY;
+  weekDrag.row.style.transform = `translate(${dx}px, ${dy}px)`;
+  weekDrag.row.style.pointerEvents = 'none';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  weekDrag.row.style.pointerEvents = '';
+  document.querySelectorAll('.week-day.drop-target').forEach(el=>el.classList.remove('drop-target'));
+  const targetRow = under && under.closest('.week-day[data-date]');
+  if(targetRow && targetRow!==weekDrag.row) targetRow.classList.add('drop-target');
+}
+
+function onWeekDragEnd(e){
+  if(!weekDrag) return;
+  const row = weekDrag.row;
+  row.style.pointerEvents = '';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  const targetRow = under && under.closest('.week-day[data-date]');
+  document.querySelectorAll('.week-day.drop-target').forEach(el=>el.classList.remove('drop-target'));
+  row.classList.remove('dragging');
+  row.style.transform = '';
+  document.removeEventListener('pointermove', onWeekDragMove);
+  document.removeEventListener('pointerup', onWeekDragEnd);
+  document.removeEventListener('pointercancel', onWeekDragEnd);
+  if(targetRow && targetRow.dataset.date!==weekDrag.originDate){
+    moveSeance(weekDrag.originDate, targetRow.dataset.date);
+  }
+  weekDrag = null;
+}
+
+// Déplace ponctuellement une séance d'une date à une autre. Crée une
+// exception aux DEUX dates concernées (échange), sans jamais toucher au
+// planning type — donc les semaines suivantes ne sont pas affectées.
+function moveSeance(dateA, dateB){
+  const a = getPlannedForDate(dateA);
+  const b = getPlannedForDate(dateB);
+  db.planning.exceptions[dateB] = a ? { programme_id:a.programme_id, seance_id:a.seance_id, heure:a.heure||null } : { programme_id:null, seance_id:null };
+  db.planning.exceptions[dateA] = b ? { programme_id:b.programme_id, seance_id:b.seance_id, heure:b.heure||null } : { programme_id:null, seance_id:null };
+  saveDB();
+  renderWeek();
+  renderDash();
+  showToast('Séance déplacée ✓');
+}
+
+// ---- Mode édition du planning type (permanent) ----
+function toggleWeekEdit(){
+  document.getElementById('weekEditPanel').classList.toggle('open');
+}
+
+function renderWeekEditPanel(){
+  const progName = db.programme_actif==='fbx3' ? 'Full Body x3' : 'Push / Pull / Legs';
+  document.getElementById('week-edit-programme').textContent = progName;
+  const seanceIds = Object.keys(P);
+  const joursOuvres = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+  document.getElementById('week-edit-rows').innerHTML = joursOuvres.map(day=>{
+    const current = (db.planning.type[day] && db.planning.type[day].programme_id===db.programme_actif)
+      ? db.planning.type[day].seance_id : '';
+    const options = ['<option value="">Repos</option>']
+      .concat(seanceIds.map(id=>`<option value="${id}"${id===current?' selected':''}>${id}</option>`));
+    return `<div class="week-edit-row">
+      <span class="week-edit-day">${day}</span>
+      <select class="week-edit-select" data-day="${day}" onchange="setPlanningTypeDay('${day}', this.value)">${options.join('')}</select>
+    </div>`;
+  }).join('');
+}
+
+function setPlanningTypeDay(day, seanceId){
+  if(!seanceId){
+    delete db.planning.type[day];
+  } else {
+    db.planning.type[day] = { programme_id: db.programme_actif, seance_id: seanceId, heure: null };
+  }
+  saveDB();
+  renderWeek();
+  renderDash();
+  showToast('Planning type mis à jour ✓');
+}
+
 // ================================================================
 // SESSION
 // ================================================================
@@ -854,6 +1206,7 @@ function goPhase(p){
 // WARMUP
 // ================================================================
 function buildWarmup(){
+  document.getElementById('session-reprise-alert').innerHTML = buildRepriseAlertHTML(true);
   const wu=P[tab].warmup;
   const col=P[tab].color;
   document.getElementById('btn-warmup-next').style.background=col;
